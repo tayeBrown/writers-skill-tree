@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { exportProgress, importProgress } from '$lib/transfer';
 	import { skillTreeStore } from '$lib/store.svelte';
+	import AuthButton from './AuthButton.svelte';
+
+	let { authenticated }: { authenticated: boolean } = $props();
 
 	type ImportState =
 		| { phase: 'idle' }
@@ -49,7 +52,12 @@
 <div class="export-import">
 	<button class="action-btn" onclick={handleExport}>Export progress</button>
 
-	<button class="action-btn" onclick={openFilePicker}>Import progress</button>
+	{#if authenticated}
+		<button class="action-btn" onclick={openFilePicker}>Import progress</button>
+	{/if}
+
+	<div class="spacer"></div>
+	<AuthButton {authenticated} />
 
 	<!-- Hidden file input -->
 	<input
@@ -119,6 +127,10 @@
 	.action-btn:hover {
 		border-color: #6b7280;
 		color: #f9fafb;
+	}
+
+	.spacer {
+		flex: 1;
 	}
 
 	.notice {

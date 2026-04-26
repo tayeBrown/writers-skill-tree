@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getContext } from 'svelte';
 	import { Handle, Position } from '@xyflow/svelte';
 	import type { NodeProps } from '@xyflow/svelte';
 	import { BRANCH_COLOR_MAP, FALLBACK_COLOR } from '$lib/types';
@@ -7,11 +8,15 @@
 
 	let { id, data }: NodeProps<SkillNode> = $props();
 
+	const getAuthenticated = getContext<(() => boolean) | undefined>('authenticated');
+	let authenticated = $derived(getAuthenticated?.() ?? false);
+
 	let nodeState = $derived(skillTreeStore.nodeStates.get(id) ?? 'locked');
 	let branchColor = $derived(BRANCH_COLOR_MAP.get(data.branch) ?? FALLBACK_COLOR);
 	let showConfirm = $state(false);
 
 	function handleClick() {
+		if (!authenticated) return;
 		if (nodeState === 'available') {
 			skillTreeStore.completeNode(id);
 		} else if (nodeState === 'completed') {
@@ -35,9 +40,10 @@
 	class:available={nodeState === 'available'}
 	class:completed={nodeState === 'completed'}
 	style="--branch-color: {branchColor}"
+	class:readonly={!authenticated}
 	role="button"
-	tabindex={nodeState === 'locked' ? -1 : 0}
-	aria-disabled={nodeState === 'locked'}
+	tabindex={nodeState === 'locked' || !authenticated ? -1 : 0}
+	aria-disabled={nodeState === 'locked' || !authenticated}
 	aria-pressed={nodeState === 'completed'}
 	onclick={handleClick}
 	onkeydown={(e) => e.key === 'Enter' && handleClick()}
@@ -124,6 +130,19 @@
 
 	.skill-node.completed:hover {
 		filter: brightness(1.1);
+	}
+
+	.skill-node.readonly.available,
+	.skill-node.readonly.completed {
+		cursor: default;
+	}
+
+	.skill-node.readonly.available:hover {
+		background-color: #1f2937;
+	}
+
+	.skill-node.readonly.completed:hover {
+		filter: none;
 	}
 
 	.label {

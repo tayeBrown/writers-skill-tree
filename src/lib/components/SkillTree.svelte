@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { setContext } from 'svelte';
 	import { SvelteFlow, Controls, Background, BackgroundVariant, MarkerType } from '@xyflow/svelte';
 	import { nodes as allNodes, edges as allEdges } from '$lib/data';
 	import { BRANCH_COLOR_MAP, FALLBACK_COLOR } from '$lib/types';
@@ -8,7 +9,10 @@
 	import SkillNode from './SkillNode.svelte';
 	import FlowController from './FlowController.svelte';
 
-	let { activeBranch }: { activeBranch: Branch | 'all' } = $props();
+	let { activeBranch, authenticated }: { activeBranch: Branch | 'all'; authenticated: boolean } =
+		$props();
+
+	setContext('authenticated', () => authenticated);
 
 	const nodeTypes = { skill: SkillNode };
 

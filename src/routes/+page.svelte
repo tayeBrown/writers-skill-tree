@@ -6,6 +6,8 @@
 	import ExportImport from '$lib/components/ExportImport.svelte';
 	import type { Branch } from '$lib/types';
 
+	let { data } = $props();
+
 	let activeBranch = $state<Branch | 'all'>('all');
 	let ready = $state(false);
 
@@ -23,14 +25,16 @@
 	<BranchFilter {activeBranch} onchange={(branch) => (activeBranch = branch)} />
 
 	<main class="tree-area">
-		{#if ready}
-			<SkillTree {activeBranch} />
+		{#if skillTreeStore.loadError}
+			<div class="loading error" role="alert">{skillTreeStore.loadError}</div>
+		{:else if ready}
+			<SkillTree {activeBranch} authenticated={data.authenticated} />
 		{:else}
 			<div class="loading" aria-live="polite">Loading…</div>
 		{/if}
 	</main>
 
-	<ExportImport />
+	<ExportImport authenticated={data.authenticated} />
 </div>
 
 <style>
@@ -59,5 +63,9 @@
 		height: 100%;
 		color: #6b7280;
 		font-size: 14px;
+	}
+
+	.loading.error {
+		color: #fca5a5;
 	}
 </style>
