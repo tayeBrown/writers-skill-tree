@@ -34,7 +34,11 @@
 		{/if}
 	</main>
 
-	<ExportImport authenticated={data.authenticated} />
+	<ExportImport
+		authenticated={data.authenticated}
+		editUrl={data.editUrl}
+		publicUrl={data.publicUrl}
+	/>
 </div>
 
 <style>

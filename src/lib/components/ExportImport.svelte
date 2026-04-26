@@ -3,7 +3,11 @@
 	import { skillTreeStore } from '$lib/store.svelte';
 	import AuthButton from './AuthButton.svelte';
 
-	let { authenticated }: { authenticated: boolean } = $props();
+	let {
+		authenticated,
+		editUrl,
+		publicUrl
+	}: { authenticated: boolean; editUrl: string | null; publicUrl: string | null } = $props();
 
 	type ImportState =
 		| { phase: 'idle' }
@@ -57,7 +61,7 @@
 	{/if}
 
 	<div class="spacer"></div>
-	<AuthButton {authenticated} />
+	<AuthButton {authenticated} {editUrl} {publicUrl} />
 
 	<!-- Hidden file input -->
 	<input

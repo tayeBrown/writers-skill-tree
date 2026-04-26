@@ -14,6 +14,14 @@ function makeJsonFile(content: unknown, name = 'progress.json'): File {
 	return new File([JSON.stringify(content)], name, { type: 'application/json' });
 }
 
+function renderComponent(authenticated: boolean) {
+	return render(ExportImport, {
+		authenticated,
+		editUrl: authenticated ? null : 'https://edit.example.com',
+		publicUrl: authenticated ? 'https://example.com' : null
+	});
+}
+
 beforeEach(() => {
 	skillTreeStore.completed = new Set();
 	vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -27,7 +35,7 @@ afterEach(() => {
 
 describe('ExportImport', () => {
 	it('renders export button and log in link when unauthenticated', async () => {
-		render(ExportImport, { authenticated: false });
+		renderComponent(false);
 		await expect
 			.element(page.getByRole('button', { name: /Export progress/ }))
 			.toBeInTheDocument();
@@ -37,31 +45,33 @@ describe('ExportImport', () => {
 		await expect.element(page.getByRole('link', { name: /Log in/ })).toBeInTheDocument();
 	});
 
-	it('renders export and import buttons and log out link when authenticated', async () => {
-		render(ExportImport, { authenticated: true });
+	it('renders export and import buttons and visitor link when authenticated', async () => {
+		renderComponent(true);
 		await expect
 			.element(page.getByRole('button', { name: /Export progress/ }))
 			.toBeInTheDocument();
 		await expect
 			.element(page.getByRole('button', { name: /Import progress/ }))
 			.toBeInTheDocument();
-		await expect.element(page.getByRole('link', { name: /Log out/ })).toBeInTheDocument();
+		await expect
+			.element(page.getByRole('link', { name: /View as visitor/ }))
+			.toBeInTheDocument();
 	});
 
 	it('shows no confirmation overlay on initial render', async () => {
-		render(ExportImport, { authenticated: true });
+		renderComponent(true);
 		await expect
 			.element(page.getByRole('dialog', { name: /Confirm import/ }))
 			.not.toBeInTheDocument();
 	});
 
 	it('shows no error notice on initial render', async () => {
-		render(ExportImport, { authenticated: true });
+		renderComponent(true);
 		await expect.element(page.getByRole('alert')).not.toBeInTheDocument();
 	});
 
 	it('shows the confirmation overlay after a valid file is selected', async () => {
-		render(ExportImport, { authenticated: true });
+		renderComponent(true);
 		const fileInput = page.getByTestId('file-input');
 		await userEvent.upload(fileInput, makeJsonFile(validPayload));
 		await expect
@@ -70,7 +80,7 @@ describe('ExportImport', () => {
 	});
 
 	it('shows the correct node count in the confirmation overlay', async () => {
-		render(ExportImport, { authenticated: true });
+		renderComponent(true);
 		const fileInput = page.getByTestId('file-input');
 		await userEvent.upload(fileInput, makeJsonFile(validPayload));
 		await expect
@@ -79,7 +89,7 @@ describe('ExportImport', () => {
 	});
 
 	it('dismisses the confirmation overlay when Cancel is clicked', async () => {
-		render(ExportImport, { authenticated: true });
+		renderComponent(true);
 		const fileInput = page.getByTestId('file-input');
 		await userEvent.upload(fileInput, makeJsonFile(validPayload));
 		await userEvent.click(page.getByRole('button', { name: /Cancel/ }));
@@ -89,7 +99,7 @@ describe('ExportImport', () => {
 	});
 
 	it('replaces progress and closes overlay when Replace progress is clicked', async () => {
-		render(ExportImport, { authenticated: true });
+		renderComponent(true);
 		const fileInput = page.getByTestId('file-input');
 		await userEvent.upload(fileInput, makeJsonFile(validPayload));
 		await userEvent.click(page.getByRole('button', { name: /Replace progress/ }));
@@ -101,14 +111,14 @@ describe('ExportImport', () => {
 	});
 
 	it('shows an error notice when an invalid file is selected', async () => {
-		render(ExportImport, { authenticated: true });
+		renderComponent(true);
 		const fileInput = page.getByTestId('file-input');
 		await userEvent.upload(fileInput, makeJsonFile('not valid json at all'));
 		await expect.element(page.getByRole('alert')).toBeInTheDocument();
 	});
 
 	it('dismisses the error notice when the dismiss button is clicked', async () => {
-		render(ExportImport, { authenticated: true });
+		renderComponent(true);
 		const fileInput = page.getByTestId('file-input');
 		await userEvent.upload(fileInput, makeJsonFile('not valid json at all'));
 		await userEvent.click(page.getByRole('button', { name: /Dismiss/ }));
@@ -116,7 +126,7 @@ describe('ExportImport', () => {
 	});
 
 	it('warns about unknown node IDs in the confirmation overlay', async () => {
-		render(ExportImport, { authenticated: true });
+		renderComponent(true);
 		const payload = { ...validPayload, completedNodes: ['p_ballad', 'not_a_real_node'] };
 		const fileInput = page.getByTestId('file-input');
 		await userEvent.upload(fileInput, makeJsonFile(payload));

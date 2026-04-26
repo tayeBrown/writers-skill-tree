@@ -15,12 +15,21 @@ function getJwks() {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-	if (!env.CF_ACCESS_AUD || !env.CF_TEAM_DOMAIN) {
-		// Local dev: CF tunnel not present, assume owner
+	if (!env.EDIT_HOST) {
+		// Local dev: no subdomain setup, assume owner
 		event.locals.authenticated = true;
 		return resolve(event);
 	}
 
+	const host = event.request.headers.get('host') ?? event.url.host;
+
+	if (host !== env.EDIT_HOST) {
+		// Public subdomain: read-only
+		event.locals.authenticated = false;
+		return resolve(event);
+	}
+
+	// Edit subdomain: validate CF JWT injected by Cloudflare Access
 	const token = event.request.headers.get('cf-access-jwt-assertion');
 
 	if (!token) {
@@ -33,7 +42,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			audience: env.CF_ACCESS_AUD,
 			issuer: `https://${env.CF_TEAM_DOMAIN}.cloudflareaccess.com`
 		});
-		event.locals.authenticated = payload['email'] === env.OWNER_EMAIL;
+		event.locals.authenticated = (payload['email'] as string | undefined) === env.OWNER_EMAIL;
 	} catch {
 		event.locals.authenticated = false;
 	}

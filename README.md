@@ -20,7 +20,7 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173).
 
-In dev mode (`CF_ACCESS_AUD` unset) the server assumes you are the owner — all nodes are interactive with no login required.
+In dev mode (`EDIT_HOST` unset) the server assumes you are the owner — all nodes are interactive with no login required.
 
 ## Other commands
 
@@ -46,25 +46,30 @@ In dev mode (`CF_ACCESS_AUD` unset) the server assumes you are the owner — all
 
 The app runs as a Node.js server inside a Docker container, designed to be served via a Cloudflare Tunnel with [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/policies/access/) handling authentication.
 
-### Cloudflare Access setup
+### Cloudflare setup
 
-In your Zero Trust dashboard, create a Self-hosted Application for your domain with two policies in order:
+The app uses two public hostnames on the same Cloudflare Tunnel pointing to the same container:
 
-1. **Allow** — Email equals your address (priority 1)
-2. **Bypass** — Everyone (priority 2)
+| Hostname | Access policy | Purpose |
+|---|---|---|
+| `yourdomain.com` | None (public) | Read-only view for visitors |
+| `edit.yourdomain.com` | Allow — your email only | Interactive edit mode |
 
-This lets visitors read the tree without authenticating, while redirecting you through the CF Access login flow. Once authenticated, CF injects a `Cf-Access-Jwt-Assertion` header that the server validates.
+In Zero Trust, create a Self-hosted Application for `edit.yourdomain.com` with a single **Allow** policy for your email. Because the edit subdomain is fully protected at Cloudflare's edge, unauthenticated traffic never reaches your origin server. Once authenticated, CF injects a `Cf-Access-Jwt-Assertion` header that the server validates.
 
-Copy the **Audience Tag** from the application settings — you'll need it below.
+Copy the **Audience Tag** from the edit application settings — you'll need it below.
 
 ### Configuration
 
-Create a `dev.env` file (gitignored) with:
+Create a `prod.env` file (gitignored, referenced by your production compose file) with:
 
 ```
-CF_ACCESS_AUD=<your audience tag>
+CF_ACCESS_AUD=<audience tag for edit.yourdomain.com>
 CF_TEAM_DOMAIN=<your team domain, e.g. myteam>
 OWNER_EMAIL=<your email>
+EDIT_HOST=edit.yourdomain.com
+EDIT_URL=https://edit.yourdomain.com
+PUBLIC_URL=https://yourdomain.com
 DB_PATH=./data/wst.db
 ```
 

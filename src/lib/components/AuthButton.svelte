@@ -1,11 +1,15 @@
 <script lang="ts">
-	let { authenticated }: { authenticated: boolean } = $props();
+	let {
+		authenticated,
+		editUrl,
+		publicUrl
+	}: { authenticated: boolean; editUrl: string | null; publicUrl: string | null } = $props();
 </script>
 
-{#if authenticated}
-	<a href="/cdn-cgi/access/logout" class="auth-btn">Log out</a>
-{:else}
-	<a href="/cdn-cgi/access/login" class="auth-btn">Log in</a>
+{#if authenticated && publicUrl}
+	<a href={publicUrl} class="auth-btn">View as visitor</a>
+{:else if !authenticated && editUrl}
+	<a href={editUrl} class="auth-btn">Log in</a>
 {/if}
 
 <style>
